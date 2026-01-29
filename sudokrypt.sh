@@ -289,6 +289,7 @@ get_hints() {
 
 # print_start_screen: Displays the initial header and system briefing.
 print_start_screen() {
+    clear
     print_header "$high_score"
     echo -e "${PURPLE_TEXT}[SYSTEM BRIEFING]${RESET}"
     echo ""
