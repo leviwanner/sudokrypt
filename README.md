@@ -6,15 +6,28 @@ A simple, terminal-based puzzle game that combines elements of Sudoku and Master
 
 ## Gameplay
 
-The game presents you with a 5x5 grid where some numbers are pre-filled as clues. Each of the five rows is a "vector" that you must stabilize.
+The game presents you with a 5x5 grid where some numbers are pre-filled as clues. You have **12 total guesses** to solve the entire puzzle.
+
+### Fog of War
+
+A key feature of SUDOKRYPT is its "Fog of War" mechanic.
+*   The colored regions for all future (unsolved) rows are hidden, concealing critical information.
+*   However, the regions for the **current row you are solving** are revealed.
+*   This makes cracking each vector a unique challenge where you must use the newly revealed region layout to your advantage. As you solve rows, the full board is gradually unveiled.
+
+### Scoring: Data Recovery
+
+Your goal is not just to win, but to win with the highest score possible.
+*   **High Score:** The game tracks your `MAX RECOVERY`, your single best score.
+*   **Round Score:** When you win, you are scored on your `DATA RECOVERED`.
+*   **Formula:** The score is calculated based on the number of guesses you have left. The formula is **(Guesses Left)³ * 100**, which means the score grows exponentially the fewer guesses you use. A perfect game (5 guesses used) yields a score of **51,200 KB**.
+
+### Core Loop
 
 1.  **Objective**: Guess the 5-digit number sequence for the currently selected row (indicated by `V#`).
 2.  **Input**: Enter a 5-digit sequence (e.g., `12345`).
-3.  **Feedback**: After each guess, the game provides feedback in a "Mastermind" style:
-    - `SIGNAL X/5` indicates that `X` digits in your guess are correct and in the right position.
-4.  **Winning a Row**: When you guess the sequence for a row correctly, the game will confirm that the "vector is stable," and you will automatically move to the next row.
-5.  **Losing**: You have a limited number of **total guesses** to solve the entire puzzle. If you exceed this limit, the game ends, and the full solution is revealed.
-6.  **Winning the Game**: Successfully stabilize all five vectors to bypass the SUDOKRYPT and win the game. Your win count will be tracked locally.
+3.  **Feedback**: After each guess, the game provides feedback in a "Mastermind" style: `SIGNAL X/5` indicates that `X` digits in your guess are in the correct position.
+4.  **Winning**: Successfully stabilize all five vectors to bypass the SUDOKRYPT. Your `MAX RECOVERY` score will be updated if you set a new record.
 
 ## Installation & How to Play
 
@@ -40,10 +53,10 @@ For easier access, you can add an alias to your shell's configuration file (`.ba
     ```bash
     nano ~/.zshrc
     ```
-2.  Add the following line, replacing `"/path/to/sudokrypt.sh"` with the actual absolute path to the script:
+2.  Add the following line, replacing `"/path/to/sudokrypt.sh"` with the actual absolute path to the script. Including `/bin/bash` ensures the script is executed with the correct interpreter.
 
     ```bash
-    alias sudokrypt="/path/to/sudokrypt.sh"
+    alias sudokrypt="/bin/bash /path/to/sudokrypt.sh"
     ```
 
     You can get the absolute path by navigating to the `sudokrypt` directory and running the `pwd` command.

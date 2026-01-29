@@ -17,7 +17,7 @@ SCORE_FILE="$HOME/.sudokrypt_score"
 # Game State
 SELECTED_ROW=0
 GUESSES_USED=1
-MAX_GUESSES=10
+MAX_GUESSES=12
 declare -a GAME_MSG=()
 
 # Colors
@@ -46,9 +46,9 @@ declare -a clues_per_region
 
 # Check if file exists, read it. If not, start at 0.
 if [[ -f "$SCORE_FILE" ]]; then
-    total_wins=$(cat "$SCORE_FILE")
+    high_score=$(cat "$SCORE_FILE")
 else
-    total_wins=0
+    high_score=0
 fi
 
 # ==============================================================================
@@ -204,7 +204,7 @@ print_header() {
     echo -e "${PURPLE_TEXT}  ▟▘▚▘▚▌▚▘${RESET}${BLUE_TEXT}▛▖▌ ▚▌▙▘▐▖ ${RESET}"
     echo -e "${BLUE_TEXT}              ▄▘▌${RESET}v1.0"
     echo -e "────────────────────────"
-    echo -e "BYPASSED: $total_wins   "
+    echo -e "MAX RECOVERY: $high_score KB"
     echo -e "────────────────────────"
 }
 
@@ -236,10 +236,21 @@ print_puzzle() {
             local current_sep="$inner_sep"
             [[ $c -eq $((SIZE - 1)) ]] && current_sep="$right_edge"
 
-            if [[ "$val" -eq "0" ]]; then
-                printf "${COLORS[$r_id]}   ${RESET}%s" "$current_sep"
+            # Fog of War Logic
+            if [[ $r -le $SELECTED_ROW || $SELECTED_ROW -eq 5 ]]; then
+                # Solved rows or game over: show region colors
+                if [[ "$val" -eq "0" ]]; then
+                    printf "${COLORS[$r_id]}   ${RESET}%s" "$current_sep"
+                else
+                    printf "${COLORS[$r_id]}${BLACK_TEXT} %d ${RESET}%s" "$val" "$current_sep"
+                fi
             else
-                printf "${COLORS[$r_id]}${BLACK_TEXT} %d ${RESET}%s" "$val" "$current_sep"
+                # Unsolved rows: hide region colors
+                if [[ "$val" -eq "0" ]]; then
+                    printf "   %s" "$current_sep"
+                else
+                    printf " %d %s" "$val" "$current_sep"
+                fi
             fi
         done
         echo ""
@@ -278,8 +289,7 @@ get_hints() {
 
 # print_start_screen: Displays the initial header and system briefing.
 print_start_screen() {
-    clear
-    print_header "$total_wins"
+    print_header "$high_score"
     echo -e "${PURPLE_TEXT}[SYSTEM BRIEFING]${RESET}"
     echo ""
     echo -e "INPUT FORMAT: ${UNDERLINE}#####${RESET}"
@@ -316,7 +326,7 @@ play_game() {
     clear
     
     # Generate Game
-    print_header "$total_wins"
+    print_header "$high_score"
     echo -e "BOOTING REMOTE DRIVE..."
     while true; do
         generate_map
@@ -382,12 +392,27 @@ play_game() {
     # End Game State
     clear
     if [[ $SELECTED_ROW -eq 5 ]]; then
-        # UPDATE SCORE
-        ((total_wins++))
-        echo "$total_wins" > "$SCORE_FILE"
+        # UPDATED SCORE
+        # ┌──────┬─────────────────┬────────────┐
+        # │ Used │ Left │ Formula  │ Score (KB) │
+        # ├──────┼──────┼──────────┼────────────┤
+        # │ 5    │ 8    │ 8³ * 100 │ 51200      │
+        # │ 6    │ 7    │ 7³ * 100 │ 34300      │
+        # │ 7    │ 6    │ 6³ * 100 │ 21600      │
+        # │ 8    │ 5    │ 5³ * 100 │ 12500      │
+        # │ 9    │ 4    │ 4³ * 100 │ 6400       │
+        # │ 10   │ 3    │ 3³ * 100 │ 2700       │
+        # │ 11   │ 2    │ 2³ * 100 │ 800        │
+        # │ 12   │ 1    │ 1³ * 100 │ 100        │
+        # └─────────────┴──────────┴────────────┘
+        local current_score=$(( (MAX_GUESSES - GUESSES_USED + 1) * (MAX_GUESSES - GUESSES_USED + 1) * (MAX_GUESSES - GUESSES_USED + 1) * 100 ))
+        if [[ $current_score -gt $high_score ]]; then
+            high_score=$current_score
+            echo "$high_score" > "$SCORE_FILE"
+        fi
         print_puzzle
         echo -e "${GREEN_BG}${BLACK_TEXT}[SUDOKRYPT BYPASSED]${RESET}"
-        echo -e "ACCESS GRANTED: $((GUESSES_USED - 1)) TRIES"
+        echo -e "DATA RECOVERED: $current_score KB"
     else
         # REVEAL SOLUTION ON LOSS
         # 1. Fill the puzzle with the solution
